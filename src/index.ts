@@ -1,80 +1,26 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
+import { userRouter } from "./routes/user.routes.js";
+import { ApiError } from "./utils/api-error.js";
 
 const PORT = 8000;
 const app = express();
 
-app.use(express.json());
-
-const users = [
-  { id: 1, name: "Budi" },
-  { id: 2, name: "Lebron" },
-  { id: 3, name: "Jamal" },
-];
+app.use(express.json()); // agar bisa menerima req.body
 
 app.get("/api", (req, res) => {
   res.status(200).send("Welcome to my API");
 });
 
-app.get("/users", (req, res) => {
-  res.status(200).send(users);
-});
-app.get("/users/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const userExist = users.find((user) => {
-    return user.id === id;
-  });
-  if (!userExist) {
-    return res.status(404).send({ message: "User Not Found" });
-  }
-  res.status(200).send(userExist);
-});
+app.use("/users", userRouter);
 
-app.patch("/users/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const userExist = users.find((user) => {
-    return user.id === id;
-  });
-  if (!userExist) {
-    return res.status(404).send({ message: "User Not Found" });
-  }
-  userExist.name = req.body.name;
-  res.status(200).send({
-    message: "User updated successfully",
-    data: userExist,
-  });
-});
-
-app.delete("/users/:id", (req, res) => {
-  const id = Number(req.params.id);
-
-  const userExist = users.find((user) => {
-    return user.id === id;
-  });
-
-  if (!userExist) {
-    return res.status(404).send({ message: "User Not Found" });
-  }
-
-  const index = users.indexOf(userExist);
-
-  users.splice(index, 1);
-
-  res.status(200).send({
-    message: "User deleted successfully",
-    data: userExist, // optional: buat pamer user mana yang baru dihapus
-  });
-});
-
-app.post("/users", (req, res) => {
-  users.push({
-    id: users[users.length - 1].id + 1,
-    name: req.body.name,
-  });
-  res.status(200).send({ message: "add new user succes" });
+app.use((err: ApiError, req: Request, res: Response, next: NextFunction) => {
+  const message = err.message || "Something went wrong!";
+  const status = err.status || 500;
+  res.status(status).send({ message });
 });
 
 app.use((req, res) => {
-  res.status(400).send({ message: "Route Not Found" });
+  res.status(404).send({ message: "Route not found" });
 });
 
 app.listen(PORT, () => {
