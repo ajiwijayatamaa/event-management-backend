@@ -1,0 +1,20 @@
+-- AlterTable
+ALTER TABLE "coupons" ALTER COLUMN "updated_at" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "events" ALTER COLUMN "updated_at" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "points" ALTER COLUMN "updated_at" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "reviews" ALTER COLUMN "updated_at" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "transactions" ALTER COLUMN "updated_at" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "users" ALTER COLUMN "updated_at" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "vouchers" ALTER COLUMN "updated_at" SET DEFAULT CURRENT_TIMESTAMP;
