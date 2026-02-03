@@ -8,7 +8,15 @@ import {
 } from "../services/user.service.js";
 
 export const getUsersController = async (req: Request, res: Response) => {
-  const result = await getUsersService();
+  const query = {
+    page: parseInt(req.query.page as string) || 1,
+    take: parseInt(req.query.take as string) || 3,
+    sortOrder: (req.query.sortOrder as string) || "desc",
+    sortBy: (req.query.sortBy as string) || "createdAt",
+    search: (req.query.search as string) || "",
+  };
+
+  const result = await getUsersService(query);
   res.status(200).send(result);
 };
 

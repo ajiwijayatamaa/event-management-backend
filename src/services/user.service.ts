@@ -1,12 +1,35 @@
-import { User } from "../generated/prisma/client.js";
+import { Prisma, User } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
+import { PaginationQueryParams } from "../types/pagination.js";
 import { ApiError } from "../utils/api-error.js";
 
-export const getUsersService = async () => {
+interface GetUsersQuery extends PaginationQueryParams {
+  search: string;
+}
+
+export const getUsersService = async (query: GetUsersQuery) => {
+  const { page, sortBy, sortOrder, take, search } = query;
+
+  const whereClause: Prisma.UserWhereInput = {};
+
+  if (search) {
+    whereClause.name = { contains: search, mode: "insensitive" };
+  }
+
   const users = await prisma.user.findMany({
+    where: whereClause,
+    take: take,
+    skip: (page - 1) * take,
+    orderBy: { [sortBy]: sortOrder },
     omit: { password: true },
-  }); //untuk nampung data users
-  return users;
+  }); //const users untuk nampung data users
+
+  const total = await prisma.user.count({ where: whereClause });
+
+  return {
+    data: users,
+    meta: { page, take, total },
+  };
 };
 
 export const getUserService = async (id: number) => {
