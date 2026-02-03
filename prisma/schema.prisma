@@ -18,7 +18,7 @@ model User {
   name           String   @db.VarChar(100)
   email          String   @unique @db.VarChar(255)
   password       String   @db.VarChar(255)
-  role           Role     @default(customer)
+  role           Role     @default(CUSTOMER)
   referralCode   String   @unique @map("referral_code") @db.VarChar(20)
   referredBy     Int?     @map("referred_by")
   referrer       User?    @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: SetNull)
@@ -117,7 +117,7 @@ model Transaction {
   ticketQuantity         Int               @map("ticket_quantity")
   totalPrice             Decimal           @map("total_price") @db.Decimal(12, 2)
   pointsUsed             Int               @default(0) @map("points_used")
-  status                 TransactionStatus @default(pending)
+  status                 TransactionStatus @default(PENDING)
   paymentProof           String?           @map("payment_proof") @db.Text
   paymentProofUploadedAt DateTime?         @map("payment_proof_uploaded_at") @db.Timestamptz(6)
   expiredAt              DateTime          @map("expired_at") @db.Timestamptz(6)
@@ -145,13 +145,13 @@ model Review {
 }
 
 enum Role {
-  customer
-  organizer
+  CUSTOMER
+  ORGANIZER
 }
 
 enum TransactionStatus {
-  pending
-  paid
-  rejected
-  expired
+  PENDING
+  PAID
+  REJECTED
+  EXPIRED
 }
