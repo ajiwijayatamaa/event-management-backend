@@ -10,7 +10,9 @@ interface GetUsersQuery extends PaginationQueryParams {
 export const getUsersService = async (query: GetUsersQuery) => {
   const { page, sortBy, sortOrder, take, search } = query;
 
-  const whereClause: Prisma.UserWhereInput = {};
+  const whereClause: Prisma.UserWhereInput = {
+    deletedAt: null,
+  };
 
   if (search) {
     whereClause.name = { contains: search, mode: "insensitive" };
@@ -34,7 +36,7 @@ export const getUsersService = async (query: GetUsersQuery) => {
 
 export const getUserService = async (id: number) => {
   const user = await prisma.user.findUnique({
-    where: { id: id },
+    where: { id: id, deletedAt: null },
     omit: { password: true },
   });
   if (!user) throw new ApiError("User Not Found", 404);
@@ -79,8 +81,9 @@ export const updateUserService = async (id: number, body: Partial<User>) => {
 export const deleteUserService = async (id: number) => {
   await getUserService(id);
 
-  await prisma.user.delete({
+  await prisma.user.update({
     where: { id },
+    data: { deletedAt: new Date() },
   });
   return { message: "Delete user success" };
 };

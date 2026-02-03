@@ -14,18 +14,19 @@ datasource db {
 }
 
 model User {
-  id             Int      @id @default(autoincrement())
-  name           String   @db.VarChar(100)
-  email          String   @unique @db.VarChar(255)
-  password       String   @db.VarChar(255)
-  role           Role     @default(CUSTOMER)
-  referralCode   String   @unique @map("referral_code") @db.VarChar(20)
-  referredBy     Int?     @map("referred_by")
-  referrer       User?    @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: SetNull)
-  referrals      User[]   @relation("UserReferrals")
-  profilePicture String?  @map("profile_picture") @db.Text
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id             Int       @id @default(autoincrement())
+  name           String    @db.VarChar(100)
+  email          String    @unique @db.VarChar(255)
+  password       String    @db.VarChar(255)
+  role           Role      @default(CUSTOMER)
+  referralCode   String    @unique @map("referral_code") @db.VarChar(20)
+  referredBy     Int?      @map("referred_by")
+  referrer       User?     @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: SetNull)
+  referrals      User[]    @relation("UserReferrals")
+  profilePicture String?   @map("profile_picture") @db.Text
+  deletedAt      DateTime? @map("deleted_at")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   events       Event[]
   points       Point[]
@@ -37,20 +38,21 @@ model User {
 }
 
 model Event {
-  id             Int      @id @default(autoincrement())
-  organizerId    Int      @map("organizer_id")
-  organizer      User     @relation(fields: [organizerId], references: [id], onDelete: Cascade)
-  name           String   @db.VarChar(255)
-  description    String?  @db.Text
-  price          Decimal  @default(0) @db.Decimal(12, 2)
-  image          String?  @db.Text
-  location       String?  @db.Text
-  availableSeats Int      @map("available_seats")
-  totalSeats     Int      @map("total_seats")
-  startDate      DateTime @map("start_date") @db.Timestamptz(6)
-  endDate        DateTime @map("end_date") @db.Timestamptz(6)
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id             Int       @id @default(autoincrement())
+  organizerId    Int       @map("organizer_id")
+  organizer      User      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  name           String    @db.VarChar(255)
+  description    String?   @db.Text
+  price          Decimal   @default(0) @db.Decimal(12, 2)
+  image          String?   @db.Text
+  location       String?   @db.Text
+  availableSeats Int       @map("available_seats")
+  totalSeats     Int       @map("total_seats")
+  startDate      DateTime  @map("start_date") @db.Timestamptz(6)
+  endDate        DateTime  @map("end_date") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   vouchers     Voucher[]
   transactions Transaction[]
@@ -59,28 +61,30 @@ model Event {
 }
 
 model Point {
-  id              Int      @id @default(autoincrement())
-  userId          Int      @map("user_id")
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount          Int      @default(10000)
-  remainingAmount Int      @default(10000) @map("remaining_amount")
-  expiredAt       DateTime @map("expired_at") @db.Timestamptz(6)
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id              Int       @id @default(autoincrement())
+  userId          Int       @map("user_id")
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount          Int       @default(10000)
+  remainingAmount Int       @default(10000) @map("remaining_amount")
+  expiredAt       DateTime  @map("expired_at") @db.Timestamptz(6)
+  deletedAt       DateTime? @map("deleted_at")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("points")
 }
 
 model Coupon {
-  id           Int      @id @default(autoincrement())
-  userId       Int      @map("user_id")
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  couponCode   String   @unique @map("coupon_code") @db.VarChar(50)
-  discountRate Decimal  @map("discount_rate") @db.Decimal(5, 2)
-  isUsed       Boolean  @default(false) @map("is_used")
-  expiredAt    DateTime @map("expired_at") @db.Timestamptz(6)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id           Int       @id @default(autoincrement())
+  userId       Int       @map("user_id")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  couponCode   String    @unique @map("coupon_code") @db.VarChar(50)
+  discountRate Decimal   @map("discount_rate") @db.Decimal(5, 2)
+  isUsed       Boolean   @default(false) @map("is_used")
+  expiredAt    DateTime  @map("expired_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   transactions Transaction[]
 
@@ -88,16 +92,17 @@ model Coupon {
 }
 
 model Voucher {
-  id                 Int      @id @default(autoincrement())
-  eventId            Int      @map("event_id")
-  event              Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  voucherCode        String   @map("voucher_code") @db.VarChar(50)
-  discountPercentage Decimal  @map("discount_percentage") @db.Decimal(5, 2)
+  id                 Int       @id @default(autoincrement())
+  eventId            Int       @map("event_id")
+  event              Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  voucherCode        String    @map("voucher_code") @db.VarChar(50)
+  discountPercentage Decimal   @map("discount_percentage") @db.Decimal(5, 2)
   quota              Int
-  startDate          DateTime @map("start_date") @db.Timestamptz(6)
-  endDate            DateTime @map("end_date") @db.Timestamptz(6)
-  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  startDate          DateTime  @map("start_date") @db.Timestamptz(6)
+  endDate            DateTime  @map("end_date") @db.Timestamptz(6)
+  deletedAt          DateTime? @map("deleted_at")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   transactions Transaction[]
 
@@ -122,6 +127,7 @@ model Transaction {
   paymentProofUploadedAt DateTime?         @map("payment_proof_uploaded_at") @db.Timestamptz(6)
   expiredAt              DateTime          @map("expired_at") @db.Timestamptz(6)
   confirmedAt            DateTime?         @map("confirmed_at") @db.Timestamptz(6)
+  deletedAt              DateTime?         @map("deleted_at")
   createdAt              DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -138,6 +144,7 @@ model Review {
   user          User        @relation(fields: [userId], references: [id])
   rating        Int
   comment       String?     @db.Text
+  deletedAt     DateTime?   @map("deleted_at")
   createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
