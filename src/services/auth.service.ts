@@ -1,5 +1,6 @@
-import { Role, User } from "../generated/prisma/client.js";
-import { hashPassword } from "../lib/argon.js";
+import jwt from "jsonwebtoken";
+import { User } from "../generated/prisma/client.js";
+import { comparePassword, hashPassword } from "../lib/argon.js";
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
 
@@ -56,4 +57,43 @@ export const registerService = async (body: RegisterBody) => {
   });
 
   return { message: "Register success" };
+};
+
+export const loginService = async (body: Pick<User, "email" | "password">) => {
+  // 1. Cek email apakah sudah ada
+  const existingUser = await prisma.user.findUnique({
+    where: { email: body.email },
+  });
+
+  // 2. Jika tidak ada throw error
+  if (!existingUser) {
+    throw new ApiError("Invalid Credentials", 400);
+  }
+
+  // 3. Cek passwordnya apakah sama atau tidak
+  const isPassMatch = await comparePassword(
+    body.password,
+    existingUser.password,
+  );
+
+  //4. Kalau tidak sama throw error
+  if (!isPassMatch) {
+    throw new ApiError("Invalid Credentials", 400);
+  }
+
+  // 5. generate token menggunakan jwt/jsonwebtoken
+  const payload = {
+    id: existingUser.id,
+    role: existingUser.role,
+  };
+  const accessToken = jwt.sign(payload, process.env.JWT_SECRET!, {
+    expiresIn: "2h",
+  });
+
+  // 6. Return data user + access token
+  const { password, ...userWithoutPassword } = existingUser; // remove properti password dengan distructuring
+  return {
+    ...userWithoutPassword,
+    accessToken: accessToken,
+  };
 };
