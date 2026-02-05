@@ -1,0 +1,59 @@
+import { Role, User } from "../generated/prisma/client.js";
+import { hashPassword } from "../lib/argon.js";
+import { prisma } from "../lib/prisma.js";
+import { ApiError } from "../utils/api-error.js";
+
+// Tambahkan referrerCode ke interface input
+interface RegisterBody extends Pick<User, "name" | "email" | "password"> {
+  referrerCode?: string; // Kode referral milik orang lainn
+}
+
+export const registerService = async (body: RegisterBody) => {
+  // 1. Cek email apakah sudah ada
+  const existingUser = await prisma.user.findUnique({
+    where: { email: body.email },
+  });
+
+  if (existingUser && !existingUser.deletedAt) {
+    throw new ApiError("Email already exists", 400);
+  }
+
+  if (existingUser && existingUser.deletedAt) {
+    throw new ApiError(
+      "This email was previously deleted. Please contact support.",
+      400,
+    );
+  }
+
+  // 2. Cek apakah dia pakai kode referral orang lain
+  let referrerId: number | null = null;
+
+  if (body.referrerCode) {
+    const referrer = await prisma.user.findUnique({
+      where: { referralCode: body.referrerCode },
+    });
+
+    if (!referrer) {
+      throw new ApiError("Invalid referral code", 400);
+    }
+
+    referrerId = referrer.id;
+  }
+
+  // 3. Hash password
+  const hashedPassword = await hashPassword(body.password);
+
+  // 4. Simpan ke database
+  await prisma.user.create({
+    data: {
+      name: body.name,
+      email: body.email,
+      password: hashedPassword,
+      role: "CUSTOMER", // default selalu CUSTOMER
+      referredBy: referrerId, // Akan berisi ID orang yang ngajak, atau null
+      // referralCode milik user sendiri akan terisi otomatis oleh @default(uuid())
+    },
+  });
+
+  return { message: "Register success" };
+};
