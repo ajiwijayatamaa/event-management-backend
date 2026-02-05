@@ -1,10 +1,13 @@
+import cors from "cors";
 import express, { NextFunction, Request, Response } from "express";
+import { authRouter } from "./routes/auth.routes.js";
 import { userRouter } from "./routes/user.routes.js";
 import { ApiError } from "./utils/api-error.js";
 
 const PORT = 8000;
 const app = express();
 
+app.use(cors());
 app.use(express.json()); // agar bisa menerima req.body
 
 app.get("/api", (req, res) => {
@@ -12,6 +15,7 @@ app.get("/api", (req, res) => {
 });
 
 app.use("/users", userRouter);
+app.use("/auth", authRouter);
 
 app.use((err: ApiError, req: Request, res: Response, next: NextFunction) => {
   const message = err.message || "Something went wrong!";
