@@ -12,6 +12,7 @@ export class AuthRouter {
   private initRoutes = () => {
     this.router.post("/register", this.authController.register);
     this.router.post("/login", this.authController.login);
+    this.router.post("/google", this.authController.google);
   };
 
   getRouter = () => {

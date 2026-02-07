@@ -19,6 +19,7 @@ model User {
   email          String    @unique @db.VarChar(255)
   password       String    @db.VarChar(255)
   role           Role      @default(CUSTOMER)
+  provider       Provider  @default(CREDENTIALS)
   referralCode   String    @unique @default(uuid()) @map("referral_code") @db.VarChar(36)
   referredBy     Int?      @map("referred_by")
   referrer       User?     @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: SetNull)
@@ -155,6 +156,11 @@ enum Role {
   CUSTOMER
   ORGANIZER
   ADMIN
+}
+
+enum Provider {
+  CREDENTIALS
+  GOOGLE
 }
 
 enum TransactionStatus {
