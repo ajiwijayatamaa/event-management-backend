@@ -15,4 +15,10 @@ export class AuthController {
     const result = await this.authService.login(body);
     res.status(200).send(result);
   };
+
+  google = async (req: Request, res: Response) => {
+    const body = req.body;
+    const result = await this.authService.google(body);
+    res.status(200).send(result);
+  };
 }
