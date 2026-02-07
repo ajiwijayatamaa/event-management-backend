@@ -1,16 +1,25 @@
 import express, { Router } from "express";
 import { UserController } from "./user.controller.js";
+import { AuthMiddleware } from "../../middlewares/auth.middleware.js";
 
 export class UserRouter {
   private router: Router;
 
-  constructor(private userController: UserController) {
+  constructor(
+    private userController: UserController,
+    private authMiddleware: AuthMiddleware,
+  ) {
     this.router = express.Router();
     this.initRoutes();
   }
 
   private initRoutes = () => {
-    this.router.get("/", this.userController.getUsers);
+    this.router.get(
+      "/",
+      this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
+      this.authMiddleware.verifyRole(["ADMIN"]),
+      this.userController.getUsers,
+    );
     this.router.get("/:id", this.userController.getUser);
     this.router.post("/", this.userController.createUser);
     this.router.patch("/:id", this.userController.updateUser);
