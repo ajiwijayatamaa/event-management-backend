@@ -1,13 +1,18 @@
 import { Prisma, PrismaClient, User } from "../../generated/prisma/client.js";
 import { PaginationQueryParams } from "../../types/pagination.js";
 import { ApiError } from "../../utils/api-error.js";
+import { CloudinaryService } from "../cloudinary/cloudinary.service.js";
 
 interface GetUsersQuery extends PaginationQueryParams {
   search: string;
 }
 
 export class UserService {
-  constructor(private prisma: PrismaClient) {}
+  constructor(
+    private prisma: PrismaClient,
+    private cloudinaryService: CloudinaryService,
+  ) {}
+
   getUsers = async (query: GetUsersQuery) => {
     const { page, sortBy, sortOrder, take, search } = query;
 
@@ -87,5 +92,28 @@ export class UserService {
       data: { deletedAt: new Date() },
     });
     return { message: "Delete user success" };
+  };
+
+  uploadPhotoProfile = async (userId: number, photo: Express.Multer.File) => {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId, deletedAt: null },
+      omit: { password: true },
+    });
+    if (!user) throw new ApiError("Invalid user id", 400);
+
+    // Kalau img sebelm udah ada di delete dulu, kalau tidak ada yasudah tidak papa
+    if (user.profilePicture) {
+      await this.cloudinaryService.removeByUrl(user.profilePicture);
+    }
+
+    const { secure_url } = await this.cloudinaryService.upload(photo);
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { profilePicture: secure_url },
+      omit: { password: true },
+    });
+
+    return { ...updatedUser, message: "Upload Photo Success" };
   };
 }
