@@ -34,8 +34,21 @@ model User {
   coupons      Coupon[]
   transactions Transaction[]
   reviews      Review[]
+  refreshToken RefreshToken?
 
   @@map("users")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int      @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiredAt DateTime @map("expired_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("refresh_tokens")
 }
 
 model Event {

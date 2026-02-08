@@ -4,10 +4,10 @@ import { PrismaClient } from "../../generated/prisma/client.js";
 import { comparePassword, hashPassword } from "../../lib/argon.js";
 import { UserInfo } from "../../types/google.js";
 import { ApiError } from "../../utils/api-error.js";
+import { MailService } from "../mail/mail.service.js";
 import { GoogleDTO } from "./dto/google.dto.js";
 import { LoginDTO } from "./dto/login.dto.js";
 import { RegisterDTO } from "./dto/register.dto.js";
-import { MailService } from "../mail/mail.service.js";
 
 export class AuthService {
   constructor(
@@ -105,7 +105,23 @@ export class AuthService {
       role: existingUser.role,
     };
     const accessToken = jwt.sign(payload, process.env.JWT_SECRET!, {
-      expiresIn: "2h",
+      expiresIn: "15m",
+    });
+    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH!, {
+      expiresIn: "1d",
+    });
+
+    await this.prisma.refreshToken.upsert({
+      where: { userId: existingUser.id },
+      update: {
+        token: refreshToken,
+        expiredAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+      },
+      create: {
+        userId: existingUser.id,
+        token: refreshToken,
+        expiredAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+      },
     });
 
     // 6. Return data user + access token
@@ -113,11 +129,39 @@ export class AuthService {
     return {
       ...userWithoutPassword,
       accessToken: accessToken,
+      refreshToken,
     };
+  };
+
+  logout = async (refreshToken?: string) => {
+    if (!refreshToken) return;
+
+    await this.prisma.refreshToken.deleteMany({
+      where: {
+        token: refreshToken,
+      },
+    });
+
+    return { message: "Logout Success" };
   };
 
   // GOOGLE
   google = async (body: GoogleDTO) => {
+    // ===== helpers =====
+    const signAccessToken = (user: { id: number; role: string }) =>
+      jwt.sign(user, process.env.JWT_SECRET!, { expiresIn: "15m" });
+
+    const signRefreshToken = (user: { id: number; role: string }) =>
+      jwt.sign(user, process.env.JWT_SECRET_REFRESH!, { expiresIn: "3d" });
+
+    const sanitizeUser = <T extends { password?: string }>(user: T) => {
+      const { password, ...rest } = user;
+      return rest;
+    };
+
+    const refreshExpiredAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+
+    // ===== get google user info =====
     const { data } = await axios.get<UserInfo>(
       "https://www.googleapis.com/oauth2/v3/userinfo",
       {
@@ -127,24 +171,14 @@ export class AuthService {
       },
     );
 
-    const user = await this.prisma.user.findUnique({
+    // ===== find user =====
+    let user = await this.prisma.user.findUnique({
       where: { email: data.email },
     });
 
-    // helper
-    const signToken = (user: { id: number; role: string }) =>
-      jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET!, {
-        expiresIn: "2h",
-      });
-
-    const sanitizeUser = <T extends { password?: string }>(user: T) => {
-      const { password, ...rest } = user;
-      return rest;
-    };
-
-    // user belum ada → create
+    // ===== create user if not exists =====
     if (!user) {
-      const newUser = await this.prisma.user.create({
+      user = await this.prisma.user.create({
         data: {
           name: data.name,
           email: data.email,
@@ -152,22 +186,63 @@ export class AuthService {
           provider: "GOOGLE",
         },
       });
-
-      return {
-        ...sanitizeUser(newUser),
-        accessToken: signToken(newUser),
-      };
     }
 
-    // user ada tapi bukan google
+    // ===== provider mismatch =====
     if (user.provider !== "GOOGLE") {
       throw new ApiError("Account already registered without google", 400);
     }
 
-    // user google existing
+    // ===== generate tokens =====
+    const accessToken = signAccessToken(user);
+    const refreshToken = signRefreshToken(user);
+
+    // ===== upsert refresh token =====
+    await this.prisma.refreshToken.upsert({
+      where: { userId: user.id },
+      update: {
+        token: refreshToken,
+        expiredAt: refreshExpiredAt,
+      },
+      create: {
+        userId: user.id,
+        token: refreshToken,
+        expiredAt: refreshExpiredAt,
+      },
+    });
+
     return {
       ...sanitizeUser(user),
-      accessToken: signToken(user),
+      accessToken,
+      refreshToken,
     };
+  };
+
+  //REFRESH TOKEN
+  refresh = async (refreshToken?: string) => {
+    if (!refreshToken) throw new ApiError("No refresh token", 400);
+
+    const stored = await this.prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+      include: { user: true },
+    });
+
+    if (!stored) throw new ApiError("Refresh Token Not Found", 400);
+
+    //Cek udah expired atau belum refresh tokennya
+    const isExpired = stored.expiredAt < new Date();
+    if (isExpired) throw new ApiError("Refresh Token Expired", 400);
+
+    // Kalau misalnya gk expired / valid bikin generate access token baru
+    const payload = {
+      id: stored.user.id,
+      role: stored.user.role,
+    };
+
+    const newAccessToken = jwt.sign(payload, process.env.JWT_SECRET!, {
+      expiresIn: "15m",
+    });
+
+    return { accessToken: newAccessToken };
   };
 }
