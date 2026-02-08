@@ -1,5 +1,7 @@
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
+import { corsOptions } from "./config/cors.js";
 import { prisma } from "./lib/prisma.js";
 import { AuthMiddleware } from "./middlewares/auth.middleware.js";
 import {
@@ -30,8 +32,9 @@ export class App {
   }
 
   private configure = () => {
-    this.app.use(cors());
+    this.app.use(cors(corsOptions));
     this.app.use(express.json()); // agar bisa menerima req.body
+    this.app.use(cookieParser());
   };
 
   private registerModules = () => {

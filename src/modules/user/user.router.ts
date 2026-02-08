@@ -19,7 +19,7 @@ export class UserRouter {
     this.router.get(
       "/",
       this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
-      // this.authMiddleware.verifyRole(["ADMIN"]),
+      this.authMiddleware.verifyRole(["ADMIN"]),
       this.userController.getUsers,
     );
     this.router.get("/:id", this.userController.getUser);
