@@ -1,14 +1,18 @@
-import express from "express";
 import cors from "cors";
+import express from "express";
 import { prisma } from "./lib/prisma.js";
-import { AuthService } from "./modules/auth/auth.service.js";
+import { AuthMiddleware } from "./middlewares/auth.middleware.js";
+import {
+  errorMiddleware,
+  notFoundMiddleware,
+} from "./middlewares/error.middleware.js";
+import { ValidationMiddleware } from "./middlewares/validation.middleware.js";
 import { AuthController } from "./modules/auth/auth.controller.js";
 import { AuthRouter } from "./modules/auth/auth.router.js";
-import { ApiError } from "./utils/api-error.js";
-import { UserService } from "./modules/user/user.service.js";
+import { AuthService } from "./modules/auth/auth.service.js";
 import { UserController } from "./modules/user/user.controller.js";
 import { UserRouter } from "./modules/user/user.router.js";
-import { AuthMiddleware } from "./middlewares/auth.middleware.js";
+import { UserService } from "./modules/user/user.service.js";
 
 const PORT = 8000;
 
@@ -41,9 +45,10 @@ export class App {
 
     //middlewares
     const authMiddleware = new AuthMiddleware();
+    const validationMiddleware = new ValidationMiddleware();
 
     // routes
-    const authRouter = new AuthRouter(authController);
+    const authRouter = new AuthRouter(authController, validationMiddleware);
     const userRouter = new UserRouter(userController, authMiddleware);
 
     // entry point
@@ -52,22 +57,8 @@ export class App {
   };
 
   private handleError = () => {
-    this.app.use(
-      (
-        err: ApiError,
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-      ) => {
-        const message = err.message || "Something went wrong!";
-        const status = err.status || 500;
-        res.status(status).send({ message });
-      },
-    );
-
-    this.app.use((req: express.Request, res: express.Response) => {
-      res.status(404).send({ message: "Route not found" });
-    });
+    this.app.use(errorMiddleware);
+    this.app.use(notFoundMiddleware);
   };
 
   start() {

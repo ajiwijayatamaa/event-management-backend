@@ -1,19 +1,18 @@
-import jwt from "jsonwebtoken";
-import { PrismaClient, User } from "../../generated/prisma/client.js";
-import { comparePassword, hashPassword } from "../../lib/argon.js";
-import { ApiError } from "../../utils/api-error.js";
 import axios from "axios";
+import jwt from "jsonwebtoken";
+import { PrismaClient } from "../../generated/prisma/client.js";
+import { comparePassword, hashPassword } from "../../lib/argon.js";
 import { UserInfo } from "../../types/google.js";
-
-interface RegisterBody extends Pick<User, "name" | "email" | "password"> {
-  referrerCode?: string; // Kode referral milik orang lainn
-}
+import { ApiError } from "../../utils/api-error.js";
+import { GoogleDTO } from "./dto/google.dto.js";
+import { LoginDTO } from "./dto/login.dto.js";
+import { RegisterDTO } from "./dto/register.dto.js";
 
 export class AuthService {
   constructor(private prisma: PrismaClient) {}
 
   // REGISTER
-  register = async (body: RegisterBody) => {
+  register = async (body: RegisterDTO) => {
     // 1. Cek email apakah sudah ada
     const existingUser = await this.prisma.user.findUnique({
       where: { email: body.email },
@@ -36,6 +35,7 @@ export class AuthService {
     if (body.referrerCode) {
       const referrer = await this.prisma.user.findUnique({
         where: { referralCode: body.referrerCode },
+        select: { id: true },
       });
 
       if (!referrer) {
@@ -64,7 +64,7 @@ export class AuthService {
   };
 
   // LOGIN
-  login = async (body: Pick<User, "email" | "password">) => {
+  login = async (body: LoginDTO) => {
     // 1. Cek email apakah sudah ada
     const existingUser = await this.prisma.user.findUnique({
       where: { email: body.email },
@@ -104,7 +104,7 @@ export class AuthService {
   };
 
   // GOOGLE
-  google = async (body: { accessToken: string }) => {
+  google = async (body: GoogleDTO) => {
     const { data } = await axios.get<UserInfo>(
       "https://www.googleapis.com/oauth2/v3/userinfo",
       {
