@@ -7,9 +7,13 @@ import { ApiError } from "../../utils/api-error.js";
 import { GoogleDTO } from "./dto/google.dto.js";
 import { LoginDTO } from "./dto/login.dto.js";
 import { RegisterDTO } from "./dto/register.dto.js";
+import { MailService } from "../mail/mail.service.js";
 
 export class AuthService {
-  constructor(private prisma: PrismaClient) {}
+  constructor(
+    private prisma: PrismaClient,
+    private mailService: MailService,
+  ) {}
 
   // REGISTER
   register = async (body: RegisterDTO) => {
@@ -60,6 +64,15 @@ export class AuthService {
       },
     });
 
+    // 5. Send email welcome ke User baru
+    await this.mailService.sendEmail(
+      body.email,
+      `Welcome, ${body.name}`,
+      "mail",
+      { name: body.name },
+    );
+
+    // 6. Return message register success
     return { message: "Register success" };
   };
 
