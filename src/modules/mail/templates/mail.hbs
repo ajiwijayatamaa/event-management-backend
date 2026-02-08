@@ -1,0 +1,72 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Welcome!</title>
+    <style>
+      /* Style di sini biasanya aman untuk Gmail/Apple Mail */
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333333;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+      }
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      }
+      .header {
+        background-color: #2563eb; /* Biru seperti Eventify kamu */
+        color: #ffffff;
+        padding: 40px 20px;
+        text-align: center;
+      }
+      .content {
+        padding: 30px;
+      }
+      .footer {
+        padding: 20px;
+        text-align: center;
+        font-size: 12px;
+        color: #94a3b8;
+      }
+      .button {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #2563eb;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: bold;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1 style="margin: 0;">Welcome to Eventify!</h1>
+      </div>
+      <div class="content">
+        <p>Hello <strong>{{name}}</strong>,</p>
+        <p>Thank you for joining us! We're excited to have you on board and
+          can't wait to see what amazing experiences you'll discover.</p>
+        <p>Ready to get started?</p>
+        <div style="text-align: center;">
+          <a href="{{loginUrl}}" class="button">Explore Events Now</a>
+        </div>
+        <p style="margin-top: 30px;">Happy exploring!<br /><strong>The Eventify
+            Team</strong></p>
+      </div>
+      <div class="footer">
+        <p>This is an automated message. Please do not reply.</p>
+        <p>&copy; 2026 Eventify Inc. Jakarta, Indonesia</p>
+      </div>
+    </div>
+  </body>
+</html>
