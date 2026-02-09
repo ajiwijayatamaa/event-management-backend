@@ -58,7 +58,7 @@ export class AuthService {
         name: body.name,
         email: body.email,
         password: hashedPassword,
-        role: "CUSTOMER", // default selalu CUSTOMER
+        role: body.role,
         referredBy: referrerId, // Akan berisi ID orang yang ngajak, atau null
         // referralCode milik user sendiri akan terisi otomatis oleh @default(uuid())
       },
