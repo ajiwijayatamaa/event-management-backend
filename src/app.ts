@@ -18,6 +18,7 @@ import { MailService } from "./modules/mail/mail.service.js";
 import { UserController } from "./modules/user/user.controller.js";
 import { UserRouter } from "./modules/user/user.router.js";
 import { UserService } from "./modules/user/user.service.js";
+import { loggerHttp } from "./lib/logger-http.js";
 
 const PORT = 8000;
 
@@ -33,6 +34,7 @@ export class App {
 
   private configure = () => {
     this.app.use(cors(corsOptions));
+    this.app.use(loggerHttp);
     this.app.use(express.json()); // agar bisa menerima req.body
     this.app.use(cookieParser());
   };
