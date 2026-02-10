@@ -30,6 +30,26 @@ export class UserController {
     res.status(200).send(result);
   };
 
+  getProfile = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // 1. Ambil ID dari token (PASTI AMAN karena sudah lewat AuthMiddleware)
+      const id = res.locals.existingUser?.id;
+
+      // 2. Validasi ID
+      if (!id) {
+        throw new ApiError("User ID not found in token", 401);
+      }
+
+      // 3. Panggil service yang baru kita buat
+      const user = await this.userService.getMyProfile(id);
+
+      // 4. Kirim response
+      res.status(200).send(user);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   updateUser = async (req: Request, res: Response) => {
     // Ambil ID dari URL jika ada, jika tidak (rute /profile) ambil dari token
     // Sesuaikan dengan nama 'existingUser' dari middleware kamu
