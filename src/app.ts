@@ -64,6 +64,7 @@ export class App {
       userController,
       authMiddleware,
       uploadMiddleware,
+      validationMiddleware,
     );
 
     // entry point

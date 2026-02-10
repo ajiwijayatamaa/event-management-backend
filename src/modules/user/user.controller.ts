@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { UserService } from "./user.service.js";
 import { ApiError } from "../../utils/api-error.js";
 
@@ -31,10 +31,32 @@ export class UserController {
   };
 
   updateUser = async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
+    // Ambil ID dari URL jika ada, jika tidak (rute /profile) ambil dari token
+    // Sesuaikan dengan nama 'existingUser' dari middleware kamu
+    const userId = req.params.id
+      ? Number(req.params.id)
+      : res.locals.existingUser?.id;
+
+    if (!userId || isNaN(userId)) {
+      throw new ApiError("User ID not found or invalid", 401);
+    }
+
     const body = req.body;
-    const result = await this.userService.updateUser(id, body);
+    const result = await this.userService.updateUser(userId, body);
     res.status(200).send(result);
+  };
+
+  changePassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = res.locals.existingUser?.id;
+
+      if (!userId) throw new ApiError("Unauthorized", 401);
+
+      const result = await this.userService.changePassword(userId, req.body);
+      res.status(200).send(result);
+    } catch (error) {
+      next(error);
+    }
   };
 
   deleteUser = async (req: Request, res: Response) => {

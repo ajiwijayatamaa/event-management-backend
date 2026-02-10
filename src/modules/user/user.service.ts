@@ -1,6 +1,8 @@
 import { Prisma, PrismaClient, User } from "../../generated/prisma/client.js";
+import { comparePassword, hashPassword } from "../../lib/argon.js";
 import { PaginationQueryParams } from "../../types/pagination.js";
 import { ApiError } from "../../utils/api-error.js";
+import { ChangePasswordDTO } from "../auth/dto/change-password.dto.js";
 import { CloudinaryService } from "../cloudinary/cloudinary.service.js";
 
 interface GetUsersQuery extends PaginationQueryParams {
@@ -82,6 +84,34 @@ export class UserService {
     });
 
     return { message: "update user success" };
+  };
+
+  changePassword = async (userId: number, body: ChangePasswordDTO) => {
+    // 1. Cari user berdasarkan ID (pastikan user ada)
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId, deletedAt: null },
+    });
+
+    if (!user) throw new ApiError("User tidak ditemukan", 404);
+
+    // 2. Cek apakah user memiliki password (antisipasi user Google Login yang belum set password)
+    if (!user.password)
+      throw new ApiError("User tidak memiliki password lokal", 400);
+
+    // 3. Bandingkan password lama dari input dengan password di database
+    const isMatch = await comparePassword(body.oldPassword, user.password);
+    if (!isMatch) throw new ApiError("Password lama salah", 400);
+
+    // 4. Hash password baru
+    const hashedPassword = await hashPassword(body.newPassword);
+
+    // 5. Update password di database
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: "Ubah password berhasil" };
   };
 
   deleteUser = async (id: number) => {
