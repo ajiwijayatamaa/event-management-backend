@@ -68,6 +68,23 @@ export class UserService {
     return { message: "Create User Success" };
   };
 
+  // Method khusus untuk mengambil profil diri sendiri beserta reward-nya
+  getMyProfile = async (id: number) => {
+    return await this.prisma.user.findUnique({
+      where: { id },
+      // Omit password agar tidak bocor ke frontend
+      omit: {
+        password: true,
+        deletedAt: true,
+      },
+      // Include: Mengambil data dari tabel relasi
+      include: {
+        points: true, // Pastikan nama ini sesuai dengan schema.prisma kamu (bisa 'points' atau 'Point')
+        coupons: true, // Pastikan nama ini sesuai dengan schema.prisma kamu (bisa 'coupons' atau 'Coupon')
+      },
+    });
+  };
+
   updateUser = async (id: number, body: Partial<User>) => {
     await this.getUser(id);
 
