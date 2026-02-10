@@ -17,63 +17,78 @@ export class AuthService {
 
   // REGISTER
   register = async (body: RegisterDTO) => {
-    // 1. Cek email apakah sudah ada
+    // 1. Cek email (Logika kamu sudah benar)
     const existingUser = await this.prisma.user.findUnique({
       where: { email: body.email },
     });
+    if (existingUser) throw new ApiError("Email already exists", 400);
 
-    if (existingUser && !existingUser.deletedAt) {
-      throw new ApiError("Email already exists", 400);
-    }
-
-    if (existingUser && existingUser.deletedAt) {
-      throw new ApiError(
-        "This email was previously deleted. Please contact support.",
-        400,
-      );
-    }
-
-    // 2. Cek apakah dia pakai kode referral orang lain
     let referrerId: number | null = null;
-
     if (body.referrerCode) {
       const referrer = await this.prisma.user.findUnique({
         where: { referralCode: body.referrerCode },
-        select: { id: true },
       });
-
-      if (!referrer) {
-        throw new ApiError("Invalid referral code", 400);
-      }
-
+      if (!referrer) throw new ApiError("Invalid referral code", 400);
       referrerId = referrer.id;
     }
 
-    // 3. Hash password
     const hashedPassword = await hashPassword(body.password);
 
-    // 4. Simpan ke database
-    await this.prisma.user.create({
-      data: {
-        name: body.name,
-        email: body.email,
-        password: hashedPassword,
-        role: body.role,
-        referredBy: referrerId, // Akan berisi ID orang yang ngajak, atau null
-        // referralCode milik user sendiri akan terisi otomatis oleh @default(uuid())
-      },
+    // LOGIKA MASA BERLAKU (3 BULAN) [cite: 38, 39]
+    const expiryDate = new Date();
+    expiryDate.setMonth(expiryDate.getMonth() + 3);
+
+    // 4. SQL TRANSACTION
+    const newUser = await this.prisma.$transaction(async (tx) => {
+      // A. Buat User Baru
+      const user = await tx.user.create({
+        data: {
+          name: body.name,
+          email: body.email,
+          password: hashedPassword,
+          role: body.role,
+          referredBy: referrerId,
+        },
+      });
+
+      // B. Jika ada kode referral, berikan hadiah
+      if (referrerId) {
+        // Referrer dapat 10.000 poin
+        await tx.point.create({
+          data: {
+            userId: referrerId,
+            amount: 10000,
+            remainingAmount: 10000,
+            expiredAt: expiryDate,
+          },
+        });
+
+        // User baru dapat kupon diskon
+        await tx.coupon.create({
+          data: {
+            userId: user.id,
+            couponCode: `REFC-NEW-${user.id}-${Math.random().toString(36).substring(7).toUpperCase()}`,
+            discountRate: 10.0, // Contoh: Diskon 10%
+            expiredAt: expiryDate,
+          },
+        });
+      }
+
+      return user;
     });
 
-    // 5. Send email welcome ke User baru
+    // 5. Send email welcome
     await this.mailService.sendEmail(
-      body.email,
-      `Welcome, ${body.name}`,
+      newUser.email,
+      `Welcome, ${newUser.name}`,
       "mail",
-      { name: body.name },
+      { name: newUser.name },
     );
 
-    // 6. Return message register success
-    return { message: "Register success" };
+    return {
+      message:
+        "Register success. Points and coupons awarded if using referral.",
+    };
   };
 
   // LOGIN
