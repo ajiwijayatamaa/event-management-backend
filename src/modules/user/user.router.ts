@@ -36,7 +36,7 @@ export class UserRouter {
       this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
       this.userController.updateUser,
     );
-    this.router.get("/:id", this.userController.getUser);
+
     this.router.post("/", this.userController.createUser);
     this.router.post(
       "/photo-profile",
@@ -53,6 +53,7 @@ export class UserRouter {
       this.validationMiddleware.validateBody(ChangePasswordDTO),
       this.userController.changePassword,
     );
+    this.router.get("/:id", this.userController.getUser);
     this.router.patch("/:id", this.userController.updateUser);
     // PROTECTED: Delete Account
     this.router.delete(

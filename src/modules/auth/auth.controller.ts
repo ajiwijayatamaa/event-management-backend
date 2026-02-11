@@ -57,4 +57,10 @@ export class AuthController {
     const { accessToken, refreshToken, ...response } = result;
     res.status(200).send(response);
   };
+
+  forgotPassword = async (req: Request, res: Response) => {
+    const body = req.body;
+    const result = await this.authService.forgotPassword(body);
+    res.status(200).send(result);
+  };
 }
