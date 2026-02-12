@@ -9,6 +9,7 @@ import { GoogleDTO } from "./dto/google.dto.js";
 import { LoginDTO } from "./dto/login.dto.js";
 import { RegisterDTO } from "./dto/register.dto.js";
 import { ForgotPasswordDTO } from "./dto/forgot-password.dto.js";
+import { ResetPasswordDTO } from "./dto/reset-password.dto.js";
 
 export class AuthService {
   constructor(
@@ -290,5 +291,23 @@ export class AuthService {
 
     // return success
     return { message: "send email success" };
+  };
+
+  resetPassword = async (body: ResetPasswordDTO, userId: number) => {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new ApiError("invalid user id", 400);
+    }
+
+    const hashedPassword = await hashPassword(body.password);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+    return { message: "reset password success" };
   };
 }

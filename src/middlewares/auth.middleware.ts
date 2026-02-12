@@ -7,22 +7,32 @@ export class AuthMiddleware {
   //Digunakan untuk mengecek token yang dikirim dari user valid atau tidak
   verifyToken = (secretKey: string) => {
     return (req: Request, res: Response, next: NextFunction) => {
-      const token = req.cookies?.accessToken; //Untuk mengambil token, biasanya dari FE ngirim tokenya lewat headers,
+      const authHeader = req.headers.authorization;
+      let token: string | undefined;
 
-      if (!token) throw new ApiError("No token provided", 401);
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.split(" ")[1];
+      }
 
-      jwt.verify(token, secretKey, (err: any, payload: any) => {
-        if (err) {
-          if (err instanceof jwt.TokenExpiredError) {
-            throw new ApiError("Token expired", 401);
-          } else {
-            throw new ApiError("Token Invalid", 401);
-          }
-        }
+      if (!token) {
+        token = req.cookies?.accessToken;
+      }
 
+      if (!token) {
+        return next(new ApiError("No token provided", 401));
+      }
+
+      try {
+        const payload = jwt.verify(token, secretKey);
         res.locals.existingUser = payload;
         next();
-      });
+      } catch (err: any) {
+        if (err instanceof jwt.TokenExpiredError) {
+          return next(new ApiError("Token expired", 401));
+        }
+
+        return next(new ApiError("Token invalid", 401));
+      }
     };
   };
 

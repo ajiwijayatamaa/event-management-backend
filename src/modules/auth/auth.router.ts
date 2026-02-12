@@ -5,6 +5,8 @@ import { GoogleDTO } from "./dto/google.dto.js";
 import { LoginDTO } from "./dto/login.dto.js";
 import { RegisterDTO } from "./dto/register.dto.js";
 import { ForgotPasswordDTO } from "./dto/forgot-password.dto.js";
+import { ResetPasswordDTO } from "./dto/reset-password.dto.js";
+import { AuthMiddleware } from "../../middlewares/auth.middleware.js";
 
 export class AuthRouter {
   private router: Router;
@@ -12,6 +14,7 @@ export class AuthRouter {
   constructor(
     private authController: AuthController,
     private validationMiddleware: ValidationMiddleware,
+    private authMiddleware: AuthMiddleware,
   ) {
     this.router = express.Router();
     this.initRoutes();
@@ -39,6 +42,12 @@ export class AuthRouter {
       "/forgot-password",
       this.validationMiddleware.validateBody(ForgotPasswordDTO),
       this.authController.forgotPassword,
+    );
+    this.router.post(
+      "/reset-password",
+      this.authMiddleware.verifyToken(process.env.JWT_SECRET_RESET!),
+      this.validationMiddleware.validateBody(ResetPasswordDTO),
+      this.authController.resetPassword,
     );
   };
 
