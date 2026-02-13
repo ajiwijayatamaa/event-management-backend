@@ -286,7 +286,7 @@ export class AuthService {
       existingUser.email,
       "Forgot Password",
       "reset-password",
-      { link: `http://localhost:5173/reset-password/${token}` },
+      { link: `${process.env.BASE_URL_FE!}/reset-password/${token}` },
     );
 
     // return success
