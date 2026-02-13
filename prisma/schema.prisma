@@ -55,7 +55,8 @@ model Event {
   id             Int       @id @default(autoincrement())
   organizerId    Int       @map("organizer_id")
   organizer      User      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
-  name           String    @db.VarChar(255)
+  name           String    @unique @db.VarChar(255)
+  slug           String    @unique
   description    String?   @db.Text
   price          Decimal   @default(0) @db.Decimal(12, 2)
   image          String?   @db.Text
