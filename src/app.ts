@@ -19,6 +19,9 @@ import { UserController } from "./modules/user/user.controller.js";
 import { UserRouter } from "./modules/user/user.router.js";
 import { UserService } from "./modules/user/user.service.js";
 import { loggerHttp } from "./lib/logger-http.js";
+import { EventService } from "./modules/event/event.service.js";
+import { EventController } from "./modules/event/event.controller.js";
+import { EventRouter } from "./modules/event/event.router.js";
 
 const PORT = 8000;
 
@@ -48,10 +51,12 @@ export class App {
     const cloudinaryService = new CloudinaryService();
     const authService = new AuthService(prismaClient, mailService);
     const userService = new UserService(prismaClient, cloudinaryService);
+    const eventService = new EventService(prismaClient);
 
     // controllers
     const authController = new AuthController(authService);
     const userController = new UserController(userService);
+    const eventController = new EventController(eventService);
 
     //middlewares
     const authMiddleware = new AuthMiddleware();
@@ -72,9 +77,12 @@ export class App {
       validationMiddleware,
     );
 
+    const eventRouter = new EventRouter(eventController);
+
     // entry point
     this.app.use("/auth", authRouter.getRouter());
     this.app.use("/users", userRouter.getRouter());
+    this.app.use("/events", eventRouter.getRouter());
   };
 
   private handleError = () => {

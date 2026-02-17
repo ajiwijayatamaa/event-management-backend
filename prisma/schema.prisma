@@ -57,10 +57,10 @@ model Event {
   organizer      User      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
   name           String    @unique @db.VarChar(255)
   slug           String    @unique
-  description    String?   @db.Text
+  description    String    @db.Text
   price          Decimal   @default(0) @db.Decimal(12, 2)
-  image          String?   @db.Text
-  location       String?   @db.Text
+  image          String    @db.Text
+  location       String    @db.Text
   availableSeats Int       @map("available_seats")
   totalSeats     Int       @map("total_seats")
   startDate      DateTime  @map("start_date") @db.Timestamptz(6)
