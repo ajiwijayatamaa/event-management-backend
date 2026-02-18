@@ -11,4 +11,10 @@ export class EventController {
     const result = await this.eventService.getEvents(query);
     res.status(200).send(result);
   };
+
+  getEventBySlug = async (req: Request, res: Response) => {
+    const slug = String(req.params.slug);
+    const result = await this.eventService.getEventBySlug(slug);
+    res.status(200).send(result);
+  };
 }

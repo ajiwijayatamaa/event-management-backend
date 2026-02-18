@@ -128,6 +128,15 @@ export class AuthService {
       expiresIn: "1d",
     });
 
+    const pointAggregation = await this.prisma.point.aggregate({
+      where: {
+        userId: existingUser.id,
+        expiredAt: { gte: new Date() }, // Hanya poin yang belum kadaluarsa
+      },
+      _sum: {
+        remainingAmount: true,
+      },
+    });
     await this.prisma.refreshToken.upsert({
       where: { userId: existingUser.id },
       update: {
@@ -145,6 +154,7 @@ export class AuthService {
     const { password, ...userWithoutPassword } = existingUser; // remove properti password dengan distructuring
     return {
       ...userWithoutPassword,
+      points: pointAggregation._sum.remainingAmount || 0,
       accessToken: accessToken,
       refreshToken,
     };
