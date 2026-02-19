@@ -51,7 +51,7 @@ export class App {
     const cloudinaryService = new CloudinaryService();
     const authService = new AuthService(prismaClient, mailService);
     const userService = new UserService(prismaClient, cloudinaryService);
-    const eventService = new EventService(prismaClient);
+    const eventService = new EventService(prismaClient, cloudinaryService);
 
     // controllers
     const authController = new AuthController(authService);
@@ -77,7 +77,12 @@ export class App {
       validationMiddleware,
     );
 
-    const eventRouter = new EventRouter(eventController);
+    const eventRouter = new EventRouter(
+      eventController,
+      authMiddleware,
+      uploadMiddleware,
+      validationMiddleware,
+    );
 
     // entry point
     this.app.use("/auth", authRouter.getRouter());

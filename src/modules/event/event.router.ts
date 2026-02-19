@@ -1,11 +1,19 @@
 import express, { Router } from "express";
 import { ValidationMiddleware } from "../../middlewares/validation.middleware.js";
 import { EventController } from "./event.controller.js";
+import { AuthMiddleware } from "../../middlewares/auth.middleware.js";
+import { CreateEventDTO } from "./dto/create-event.dto.js";
+import { UploadMiddleware } from "../../middlewares/upload.middleware.js";
 
 export class EventRouter {
   private router: Router;
 
-  constructor(private eventController: EventController) {
+  constructor(
+    private eventController: EventController,
+    private authMiddleware: AuthMiddleware,
+    private uploadMiddleware: UploadMiddleware,
+    private validationMiddleware: ValidationMiddleware,
+  ) {
     this.router = express.Router();
     this.initRoutes();
   }
@@ -13,6 +21,13 @@ export class EventRouter {
   private initRoutes = () => {
     this.router.get("/", this.eventController.getEvents);
     this.router.get("/:slug", this.eventController.getEventBySlug);
+    this.router.post(
+      "/",
+      this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
+      this.uploadMiddleware.upload().fields([{ name: "image", maxCount: 1 }]),
+      this.validationMiddleware.validateBody(CreateEventDTO),
+      this.eventController.createEvent,
+    );
   };
 
   getRouter = () => {

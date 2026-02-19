@@ -1,9 +1,15 @@
 import { Prisma, PrismaClient } from "../../generated/prisma/client.js";
 import { ApiError } from "../../utils/api-error.js";
+import { generateSlug } from "../../utils/generate-slug.js";
+import { CloudinaryService } from "../cloudinary/cloudinary.service.js";
+import { CreateEventDTO } from "./dto/create-event.dto.js";
 import { GetEventsDTO } from "./dto/get-events.dto.js";
 
 export class EventService {
-  constructor(private prisma: PrismaClient) {}
+  constructor(
+    private prisma: PrismaClient,
+    private cloudinaryService: CloudinaryService,
+  ) {}
 
   getEvents = async (query: GetEventsDTO & { organizerId?: number }) => {
     const { page, sortBy, sortOrder, take, search, organizerId } = query;
@@ -88,5 +94,40 @@ export class EventService {
     if (!event) throw new ApiError("Event Not Found", 404);
 
     return event;
+  };
+
+  createEvent = async (
+    body: CreateEventDTO,
+    image: Express.Multer.File,
+    organizerId: number,
+  ) => {
+    // 1. Cari dulu event berdasarkan nama event sudah ada atau belum
+    const event = await this.prisma.event.findUnique({
+      where: { name: body.name },
+    });
+
+    // 2. Kalau udah ada throw error
+    if (event) throw new ApiError("Nama Event Sudah Digunakan", 400);
+
+    // 3. Kalau belum ada generate slug berdasarkan nama event, ambil dari fungsi generate slug di folder utils kalau belum ada buat fungsinya,
+    const slug = generateSlug(body.name);
+
+    // 4. upload thumbnail ke cloudinary, untuk upload ke cloudinary ambil dari fungsi cloudinay.service.ts dan pasang di constructor
+    const { secure_url } = await this.cloudinaryService.upload(image);
+
+    // 5. create data blog baru berdasarkan body, secure_url , dan organizerId
+    const newEvent = await this.prisma.event.create({
+      data: {
+        ...body,
+        slug,
+        image: secure_url,
+        organizerId,
+      },
+    });
+    // 6. return message berhasil
+    return {
+      message: "Event Created Successfully",
+      data: newEvent,
+    };
   };
 }
