@@ -127,7 +127,7 @@ export class AuthService {
     const refreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH!, {
       expiresIn: "1d",
     });
-
+    // A. Ambil Total Poin Aktif
     const pointAggregation = await this.prisma.point.aggregate({
       where: {
         userId: existingUser.id,
@@ -135,6 +135,14 @@ export class AuthService {
       },
       _sum: {
         remainingAmount: true,
+      },
+    });
+    // B. Ambil Kupon Diskon Aktif
+    const activeCoupons = await this.prisma.coupon.findMany({
+      where: {
+        userId: existingUser.id,
+        isUsed: false, // Belum dipakai
+        expiredAt: { gte: new Date() }, // Belum expired
       },
     });
     await this.prisma.refreshToken.upsert({
@@ -155,6 +163,7 @@ export class AuthService {
     return {
       ...userWithoutPassword,
       points: pointAggregation._sum.remainingAmount || 0,
+      coupons: activeCoupons,
       accessToken: accessToken,
       refreshToken,
     };
