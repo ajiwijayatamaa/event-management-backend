@@ -4,6 +4,7 @@ import { PaginationQueryParams } from "../../types/pagination.js";
 import { ApiError } from "../../utils/api-error.js";
 import { ChangePasswordDTO } from "../auth/dto/change-password.dto.js";
 import { CloudinaryService } from "../cloudinary/cloudinary.service.js";
+import { UpdateUserDTO } from "./dto/update-user.dto.js";
 
 interface GetUsersQuery extends PaginationQueryParams {
   search: string;
@@ -85,22 +86,26 @@ export class UserService {
     });
   };
 
-  updateUser = async (id: number, body: Partial<User>) => {
+  updateUser = async (id: number, body: UpdateUserDTO) => {
     await this.getUser(id);
 
     if (body.email) {
-      const userEmail = await this.prisma.user.findUnique({
-        where: { email: body.email },
+      const userEmail = await this.prisma.user.findFirst({
+        where: { email: body.email, NOT: { id } },
       });
-      if (userEmail) throw new ApiError("email already exist", 400);
+      if (userEmail) throw new ApiError("Email already exist", 400);
     }
 
-    await this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id },
-      data: body,
+      data: {
+        name: body.name,
+        email: body.email,
+      },
+      omit: { password: true },
     });
 
-    return { message: "update user success" };
+    return { message: "Update user success", data: updatedUser };
   };
 
   changePassword = async (userId: number, body: ChangePasswordDTO) => {

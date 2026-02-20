@@ -25,12 +25,14 @@ export class UserRouter {
       this.authMiddleware.verifyRole(["ADMIN"]),
       this.userController.getUsers,
     );
+
     this.router.get(
       "/profile", // Endpoint khusus profil sendiri
       this.authMiddleware.verifyToken(process.env.JWT_SECRET!), // Wajib login
       this.userController.getProfile, // Panggil controller baru
     );
-    // PROTECTED: Update Profile Data (Name, Email, etc.)
+
+    // PROTECTED: Update diri sendiri. Update Profile Data (Name, Email, etc.)
     this.router.patch(
       "/profile", // Gunakan endpoint spesifik, jangan pakai /:id agar user hanya bisa update diri sendiri
       this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
@@ -57,6 +59,8 @@ export class UserRouter {
     );
 
     this.router.get("/:id", this.userController.getUser);
+
+    //Khusus Admin kalau nanti ada admin
     this.router.patch("/:id", this.userController.updateUser);
 
     // PROTECTED: Delete Account
