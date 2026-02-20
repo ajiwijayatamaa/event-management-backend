@@ -20,7 +20,7 @@ model User {
   password       String    @db.VarChar(255)
   role           Role      @default(CUSTOMER)
   provider       Provider  @default(CREDENTIALS)
-  referralCode   String    @unique @default(uuid()) @map("referral_code") @db.VarChar(36)
+  referralCode   String    @unique @map("referral_code") @db.VarChar(10)
   referredBy     Int?      @map("referred_by")
   referrer       User?     @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: SetNull)
   referrals      User[]    @relation("UserReferrals")
