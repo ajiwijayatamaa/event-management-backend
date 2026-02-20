@@ -15,7 +15,7 @@ export class EventService {
     const { page, sortBy, sortOrder, take, search, organizerId } = query;
 
     const whereClause: Prisma.EventWhereInput = {
-      deletedAt: null, // Mengikuti best practice karena ada field deletedAt
+      deletedAt: null,
     };
 
     if (search) {

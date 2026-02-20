@@ -38,10 +38,20 @@ export class AuthMiddleware {
 
   verifyRole = (roles: Role[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
-      const userRole = res.locals.existingUser.role;
+      try {
+        const userRole = res.locals.existingUser?.role;
 
-      if (!userRole || !roles.includes(userRole)) {
-        throw new ApiError("You dont have access to this resource", 403);
+        if (!userRole || !roles.includes(userRole)) {
+          // Gunakan next() untuk error agar ditangkap oleh global error handler
+          return next(
+            new ApiError("You don't have access to this resource", 403),
+          );
+        }
+
+        // WAJIB DIPANGGIL: Agar lanjut ke controller
+        next();
+      } catch (err) {
+        next(err);
       }
     };
   };

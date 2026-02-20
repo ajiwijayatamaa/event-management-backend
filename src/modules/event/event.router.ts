@@ -19,11 +19,22 @@ export class EventRouter {
   }
 
   private initRoutes = () => {
+    // 1. Untuk Public
     this.router.get("/", this.eventController.getEvents);
+
+    // 2. Untuk Organizer login (lihat event miliknya sendiri)
+    this.router.get(
+      "/my-events",
+      this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
+      this.authMiddleware.verifyRole(["ORGANIZER"]),
+      this.eventController.getOrganizerEvents,
+    );
+
     this.router.get("/:slug", this.eventController.getEventBySlug);
     this.router.post(
       "/",
       this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
+      this.authMiddleware.verifyRole(["ORGANIZER"]),
       this.uploadMiddleware.upload().fields([{ name: "image", maxCount: 1 }]),
       this.validationMiddleware.validateBody(CreateEventDTO),
       this.eventController.createEvent,
