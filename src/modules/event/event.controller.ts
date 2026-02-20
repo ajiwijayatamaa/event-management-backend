@@ -13,6 +13,20 @@ export class EventController {
     res.status(200).send(result);
   };
 
+  // 2.GET (khusus Dashboard Organizer)
+  getOrganizerEvents = async (req: Request, res: Response) => {
+    const query = plainToInstance(GetEventsDTO, req.query);
+    // Ambil ID dari token (res.locals)
+    const organizerId = res.locals.existingUser.id;
+
+    // Panggil dengan mengirim organizerId
+    const result = await this.eventService.getEvents({
+      ...query,
+      organizerId,
+    });
+    res.status(200).send(result);
+  };
+
   getEventBySlug = async (req: Request, res: Response) => {
     const slug = String(req.params.slug);
     const result = await this.eventService.getEventBySlug(slug);
