@@ -4,6 +4,7 @@ import { generateSlug } from "../../utils/generate-slug.js";
 import { CloudinaryService } from "../cloudinary/cloudinary.service.js";
 import { CreateEventDTO } from "./dto/create-event.dto.js";
 import { GetEventsDTO } from "./dto/get-events.dto.js";
+import { UpdateEventDTO } from "./dto/update-event.dto.js";
 
 export class EventService {
   constructor(
@@ -128,6 +129,42 @@ export class EventService {
     return {
       message: "Event Created Successfully",
       data: newEvent,
+    };
+  };
+
+  updateEvent = async (
+    eventId: number,
+    body: UpdateEventDTO,
+    organizerId: number,
+    image?: Express.Multer.File,
+  ) => {
+    // 1. Cek event ada dan milik organizer ini
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId, organizerId, deletedAt: null },
+    });
+
+    if (!event) throw new ApiError("Event tidak ditemukan", 404);
+
+    // 2. Upload image baru jika ada, kalau tidak pakai image lama
+    let imageUrl = event.image;
+    if (image) {
+      const { secure_url } = await this.cloudinaryService.upload(image);
+      imageUrl = secure_url;
+    }
+
+    // 3. Update event
+    const updatedEvent = await this.prisma.event.update({
+      where: { id: eventId },
+      data: {
+        ...body,
+        image: imageUrl,
+        ...(body.name && { slug: generateSlug(body.name) }), // hanya update slug kalau nama dikirim
+      },
+    });
+
+    return {
+      message: "Event Updated Successfully",
+      data: updatedEvent,
     };
   };
 }

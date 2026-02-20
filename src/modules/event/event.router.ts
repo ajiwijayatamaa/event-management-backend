@@ -4,6 +4,7 @@ import { EventController } from "./event.controller.js";
 import { AuthMiddleware } from "../../middlewares/auth.middleware.js";
 import { CreateEventDTO } from "./dto/create-event.dto.js";
 import { UploadMiddleware } from "../../middlewares/upload.middleware.js";
+import { UpdateEventDTO } from "./dto/update-event.dto.js";
 
 export class EventRouter {
   private router: Router;
@@ -31,6 +32,8 @@ export class EventRouter {
     );
 
     this.router.get("/:slug", this.eventController.getEventBySlug);
+
+    // Organizer - buat event
     this.router.post(
       "/",
       this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
@@ -38,6 +41,16 @@ export class EventRouter {
       this.uploadMiddleware.upload().fields([{ name: "image", maxCount: 1 }]),
       this.validationMiddleware.validateBody(CreateEventDTO),
       this.eventController.createEvent,
+    );
+
+    // Organizer - edit event
+    this.router.patch(
+      "/:id",
+      this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
+      this.authMiddleware.verifyRole(["ORGANIZER"]),
+      this.uploadMiddleware.upload().fields([{ name: "image", maxCount: 1 }]),
+      this.validationMiddleware.validateBody(UpdateEventDTO),
+      this.eventController.updateEvent,
     );
   };
 
