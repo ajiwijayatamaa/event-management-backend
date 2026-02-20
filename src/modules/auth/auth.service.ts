@@ -10,6 +10,7 @@ import { LoginDTO } from "./dto/login.dto.js";
 import { RegisterDTO } from "./dto/register.dto.js";
 import { ForgotPasswordDTO } from "./dto/forgot-password.dto.js";
 import { ResetPasswordDTO } from "./dto/reset-password.dto.js";
+import { generateReferralCode } from "../../utils/generate-refferal-code.js";
 
 export class AuthService {
   constructor(
@@ -50,6 +51,7 @@ export class AuthService {
           password: hashedPassword,
           role: body.role,
           referredBy: referrerId,
+          referralCode: generateReferralCode(body.name),
         },
       });
 
@@ -220,6 +222,7 @@ export class AuthService {
           email: data.email,
           password: "",
           provider: "GOOGLE",
+          referralCode: generateReferralCode(data.name),
         },
       });
     }
