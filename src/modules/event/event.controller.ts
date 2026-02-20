@@ -3,6 +3,7 @@ import { EventService } from "./event.service.js";
 import { GetEventsDTO } from "./dto/get-events.dto.js";
 import { plainToInstance } from "class-transformer";
 import { ApiError } from "../../utils/api-error.js";
+import { UpdateEventDTO } from "./dto/update-event.dto.js";
 
 export class EventController {
   constructor(private eventService: EventService) {}
@@ -47,5 +48,22 @@ export class EventController {
       organizerId,
     );
     res.status(201).send(result);
+  };
+
+  updateEvent = async (req: Request, res: Response) => {
+    const eventId = Number(req.params.id);
+    const body = plainToInstance(UpdateEventDTO, req.body);
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const image = files?.image?.[0];
+
+    const organizerId = res.locals.existingUser.id;
+
+    const result = await this.eventService.updateEvent(
+      eventId,
+      body,
+      organizerId,
+      image,
+    );
+    res.status(200).send(result);
   };
 }
