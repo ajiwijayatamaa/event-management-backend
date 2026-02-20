@@ -50,6 +50,15 @@ export class UserController {
     }
   };
 
+  // Untuk user biasa → update diri sendiri
+  updateMyProfile = async (req: Request, res: Response) => {
+    const userId = res.locals.existingUser?.id;
+    if (!userId) throw new ApiError("Unauthorized", 401);
+    const result = await this.userService.updateUser(userId, req.body);
+    res.status(200).send(result);
+  };
+
+  // Untuk admin update user lain
   updateUser = async (req: Request, res: Response) => {
     // Ambil ID dari URL jika ada, jika tidak (rute /profile) ambil dari token
     // Sesuaikan dengan nama 'existingUser' dari middleware kamu
