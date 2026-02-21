@@ -4,6 +4,7 @@ import { generateSlug } from "../../utils/generate-slug.js";
 import { CloudinaryService } from "../cloudinary/cloudinary.service.js";
 import { CreateEventDTO } from "./dto/create-event.dto.js";
 import { GetEventsDTO } from "./dto/get-events.dto.js";
+import { GetStatisticsDTO } from "./dto/get-statistics.dto.js";
 import { UpdateEventDTO } from "./dto/update-event.dto.js";
 
 export class EventService {
@@ -131,6 +132,80 @@ export class EventService {
         totalAttendees: attendees.length,
         totalTickets: attendees.reduce((sum, a) => sum + a.ticketQuantity, 0),
       },
+    };
+  };
+
+  getStatistics = async (query: GetStatisticsDTO & { organizerId: number }) => {
+    const { period, organizerId } = query;
+
+    // ambil semua transaksi yang sudah PAID dari event milik organizer
+    // filter by organizerId lewat relasi event, bukan langsung di transaction
+    const transactions = await this.prisma.transaction.findMany({
+      where: {
+        event: { organizerId }, // filter transaksi berdasarkan event milik organizer
+        status: "PAID", // hanya transaksi yang sudah berhasil dibayar
+        deletedAt: null, // abaikan data yang sudah dihapus (soft delete)
+      },
+      select: {
+        totalPrice: true, // untuk hitung total revenue
+        ticketQuantity: true, // untuk hitung total tiket terjual
+        createdAt: true,
+      },
+    });
+
+    // hitung jumlah event yang masih aktif milik organizer
+    const activeEvents = await this.prisma.event.count({
+      where: { organizerId, deletedAt: null },
+    });
+
+    // jumlahkan semua ticketQuantity dari transaksi yang sudah diambil
+    const totalTicketsSold = transactions.reduce(
+      (sum, t) => sum + t.ticketQuantity,
+      0,
+    );
+
+    // jumlahkan semua totalPrice, di-convert ke Number karena Prisma return Decimal
+    const totalRevenue = transactions.reduce(
+      (sum, t) => sum + Number(t.totalPrice),
+      0,
+    );
+
+    // objek kosong untuk menampung data yang sudah dikelompokkan per periode
+    const groupedData: Record<string, { revenue: number; tickets: number }> =
+      {};
+
+    for (const t of transactions) {
+      let key: string; // key untuk grouping, formatnya beda tergantung period
+
+      if (period === "year") {
+        key = String(t.createdAt.getFullYear()); // contoh: "2024"
+      } else if (period === "month") {
+        // contoh: "2024-01", pakai padStart supaya bulan selalu 2 digit
+        key = `${t.createdAt.getFullYear()}-${String(t.createdAt.getMonth() + 1).padStart(2, "0")}`;
+      } else {
+        // period === "day", contoh: "2024-01-15"
+        key = t.createdAt.toISOString().split("T")[0];
+      }
+
+      // kalau key belum ada di groupedData, inisialisasi dulu dengan nilai 0
+      if (!groupedData[key]) {
+        groupedData[key] = { revenue: 0, tickets: 0 };
+      }
+
+      // tambahkan nilai transaksi ini ke kelompok yang sesuai
+      groupedData[key].revenue += Number(t.totalPrice);
+      groupedData[key].tickets += t.ticketQuantity;
+    }
+
+    // ubah object jadi array supaya mudah dikonsumsi di frontend
+    // lalu sort ascending berdasarkan label (key) supaya urutan waktu benar
+    const chartData = Object.entries(groupedData)
+      .map(([label, value]) => ({ label, ...value }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+
+    return {
+      summary: { activeEvents, totalTicketsSold, totalRevenue }, // untuk stats cards
+      chartData, // untuk data grafik
     };
   };
 

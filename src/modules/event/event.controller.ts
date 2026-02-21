@@ -4,6 +4,7 @@ import { GetEventsDTO } from "./dto/get-events.dto.js";
 import { plainToInstance } from "class-transformer";
 import { ApiError } from "../../utils/api-error.js";
 import { UpdateEventDTO } from "./dto/update-event.dto.js";
+import { GetStatisticsDTO } from "./dto/get-statistics.dto.js";
 
 export class EventController {
   constructor(private eventService: EventService) {}
@@ -38,6 +39,18 @@ export class EventController {
     const slug = String(req.params.slug);
     const organizerId = res.locals.existingUser.id;
     const result = await this.eventService.getAttendees(slug, organizerId);
+    res.status(200).send(result);
+  };
+
+  getStatistics = async (req: Request, res: Response) => {
+    const query = plainToInstance(GetStatisticsDTO, req.query);
+    const organizerId = res.locals.existingUser.id;
+
+    const result = await this.eventService.getStatistics({
+      ...query,
+      organizerId,
+    });
+
     res.status(200).send(result);
   };
 
