@@ -1,0 +1,101 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Transaksi Ditolak</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f4f6f8;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      .container {
+        width: 100%;
+        padding: 40px 0;
+        background-color: #f4f6f8;
+      }
+      .card {
+        max-width: 500px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 40px 30px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        text-align: center;
+      }
+      .icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+      }
+      h1 {
+        margin: 0 0 20px;
+        font-size: 22px;
+        color: #333333;
+      }
+      p {
+        font-size: 14px;
+        color: #555555;
+        line-height: 1.6;
+        margin-bottom: 16px;
+      }
+      .detail-box {
+        background-color: #fff1f2;
+        border: 1px solid #fecdd3;
+        border-radius: 6px;
+        padding: 16px;
+        margin: 20px 0;
+        text-align: left;
+      }
+      .detail-box p {
+        margin: 4px 0;
+        font-size: 13px;
+        color: #374151;
+      }
+      .detail-box span {
+        font-weight: bold;
+        color: #dc2626;
+      }
+      .refund-note {
+        background-color: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 6px;
+        padding: 12px 16px;
+        margin: 16px 0;
+        font-size: 13px;
+        color: #0369a1;
+        text-align: left;
+      }
+      .footer {
+        margin-top: 30px;
+        font-size: 12px;
+        color: #888888;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <div class="icon">❌</div>
+        <h1>Transaksi Kamu Ditolak</h1>
+        <p>Hei
+          <strong>{{name}}</strong>, transaksi kamu telah ditolak oleh
+          organizer.</p>
+        <div class="detail-box">
+          <p>Event: <span>{{eventName}}</span></p>
+          <p>Jumlah Tiket: <span>{{ticketQuantity}}</span></p>
+          <p>Total Pembayaran: <span>{{totalPrice}}</span></p>
+        </div>
+        <div class="refund-note">
+          💡 Tenang! Semua poin, voucher, dan kupon yang kamu gunakan sudah
+          dikembalikan ke akunmu.
+        </div>
+        <p>Jika ada pertanyaan, silakan hubungi penyelenggara event secara
+          langsung.</p>
+        <div class="footer">
+          Email ini dikirim otomatis. Jika ada pertanyaan, hubungi penyelenggara
+          event.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

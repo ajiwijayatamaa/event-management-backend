@@ -22,6 +22,9 @@ import { loggerHttp } from "./lib/logger-http.js";
 import { EventService } from "./modules/event/event.service.js";
 import { EventController } from "./modules/event/event.controller.js";
 import { EventRouter } from "./modules/event/event.router.js";
+import { TransactionService } from "./modules/transaction/transaction.service.js";
+import { TransactionController } from "./modules/transaction/transaction.controller.js";
+import { TransactionRouter } from "./modules/transaction/transaction.router.js";
 
 const PORT = 8000;
 
@@ -52,11 +55,17 @@ export class App {
     const authService = new AuthService(prismaClient, mailService);
     const userService = new UserService(prismaClient, cloudinaryService);
     const eventService = new EventService(prismaClient, cloudinaryService);
+    const transactionService = new TransactionService(
+      prismaClient,
+      cloudinaryService,
+      mailService,
+    );
 
     // controllers
     const authController = new AuthController(authService);
     const userController = new UserController(userService);
     const eventController = new EventController(eventService);
+    const transactionController = new TransactionController(transactionService);
 
     //middlewares
     const authMiddleware = new AuthMiddleware();
@@ -84,10 +93,16 @@ export class App {
       validationMiddleware,
     );
 
+    const transactionRouter = new TransactionRouter(
+      transactionController,
+      authMiddleware,
+      uploadMiddleware,
+    );
     // entry point
     this.app.use("/auth", authRouter.getRouter());
     this.app.use("/users", userRouter.getRouter());
     this.app.use("/events", eventRouter.getRouter());
+    this.app.use("/transactions", transactionRouter.getRouter());
   };
 
   private handleError = () => {
