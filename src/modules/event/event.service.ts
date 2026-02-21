@@ -55,7 +55,7 @@ export class EventService {
 
   getEventBySlug = async (slug: string) => {
     const event = await this.prisma.event.findUnique({
-      where: { slug },
+      where: { slug, deletedAt: null },
       include: {
         organizer: {
           select: {
@@ -95,6 +95,43 @@ export class EventService {
     if (!event) throw new ApiError("Event Not Found", 404);
 
     return event;
+  };
+
+  getAttendees = async (slug: string, organizerId: number) => {
+    // 1. Cek event ada dan milik organizer ini
+    const event = await this.prisma.event.findUnique({
+      where: { slug, organizerId, deletedAt: null },
+    });
+
+    if (!event) throw new ApiError("Event tidak ditemukan", 404);
+
+    // 2. Ambil semua transaksi yang PAID (attendees yang sudah bayar)
+    const attendees = await this.prisma.transaction.findMany({
+      where: {
+        eventId: event.id,
+        status: "PAID",
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        ticketQuantity: true,
+        totalPrice: true,
+        createdAt: true,
+        user: {
+          select: { name: true, email: true, profilePicture: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return {
+      data: attendees,
+      meta: {
+        eventName: event.name,
+        totalAttendees: attendees.length,
+        totalTickets: attendees.reduce((sum, a) => sum + a.ticketQuantity, 0),
+      },
+    };
   };
 
   createEvent = async (

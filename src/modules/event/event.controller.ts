@@ -34,6 +34,13 @@ export class EventController {
     res.status(200).send(result);
   };
 
+  getAttendees = async (req: Request, res: Response) => {
+    const slug = String(req.params.slug);
+    const organizerId = res.locals.existingUser.id;
+    const result = await this.eventService.getAttendees(slug, organizerId);
+    res.status(200).send(result);
+  };
+
   createEvent = async (req: Request, res: Response) => {
     const body = req.body;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
