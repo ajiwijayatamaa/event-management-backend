@@ -5,6 +5,7 @@ import { AuthMiddleware } from "../../middlewares/auth.middleware.js";
 import { CreateEventDTO } from "./dto/create-event.dto.js";
 import { UploadMiddleware } from "../../middlewares/upload.middleware.js";
 import { UpdateEventDTO } from "./dto/update-event.dto.js";
+import { GetStatisticsDTO } from "./dto/get-statistics.dto.js";
 
 export class EventRouter {
   private router: Router;
@@ -31,7 +32,15 @@ export class EventRouter {
       this.eventController.getOrganizerEvents,
     );
 
-    // 3. Organizer - lihat attendees per event
+    // 3. Organizer - lihat statistik event miliknya
+    this.router.get(
+      "/statistics",
+      this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
+      this.authMiddleware.verifyRole(["ORGANIZER"]),
+      this.eventController.getStatistics,
+    );
+
+    // 4. Organizer - lihat attendees per event
     this.router.get(
       "/:slug/attendees",
       this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
@@ -39,10 +48,10 @@ export class EventRouter {
       this.eventController.getAttendees,
     );
 
-    // 4. Public - detail event by slug
+    // 5. Public - detail event by slug
     this.router.get("/:slug", this.eventController.getEventBySlug);
 
-    // Organizer - buat event
+    // 6. Organizer - buat event
     this.router.post(
       "/",
       this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
@@ -52,7 +61,7 @@ export class EventRouter {
       this.eventController.createEvent,
     );
 
-    // Organizer - edit event
+    // 7. Organizer - edit event
     this.router.patch(
       "/:id",
       this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
