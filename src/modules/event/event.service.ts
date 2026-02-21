@@ -151,6 +151,9 @@ export class EventService {
       const { secure_url } = await this.cloudinaryService.upload(image);
       imageUrl = secure_url;
     }
+    // 3. Hitung availableSeats — selalu dikirim karena wajib di Prisma
+    const soldTickets = event.totalSeats - event.availableSeats;
+    const newTotalSeats = body.totalSeats ?? event.totalSeats;
 
     // 3. Update event
     const updatedEvent = await this.prisma.event.update({
@@ -158,6 +161,7 @@ export class EventService {
       data: {
         ...body,
         image: imageUrl,
+        availableSeats: newTotalSeats - soldTickets,
         ...(body.name && { slug: generateSlug(body.name) }), // hanya update slug kalau nama dikirim
       },
     });
