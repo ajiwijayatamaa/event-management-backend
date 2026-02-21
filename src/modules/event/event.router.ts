@@ -31,6 +31,15 @@ export class EventRouter {
       this.eventController.getOrganizerEvents,
     );
 
+    // 3. Organizer - lihat attendees per event
+    this.router.get(
+      "/:slug/attendees",
+      this.authMiddleware.verifyToken(process.env.JWT_SECRET!),
+      this.authMiddleware.verifyRole(["ORGANIZER"]),
+      this.eventController.getAttendees,
+    );
+
+    // 4. Public - detail event by slug
     this.router.get("/:slug", this.eventController.getEventBySlug);
 
     // Organizer - buat event
